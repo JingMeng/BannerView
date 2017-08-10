@@ -1,6 +1,7 @@
 package com.baimeng.bannerview.banner;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -39,6 +40,20 @@ public class BannerView extends RelativeLayout{
     //当前指示点
     private int mCurrIndicator = 0 ;
 
+    //自定义属性
+    //指示点的位置，默认在左边
+    private int mDotGravity = -1 ;
+    //点的大小，默认8dp
+    private int mDotSize = 8 ;
+    //点的间距，默认8dp
+    private int mDotDistance ;
+    //指示点背景颜色
+    private int mBottomColor = Color.TRANSPARENT ;
+    //宽高比
+    private float mWidthProportion,mHeightProportion;
+
+    private View mBannerBV;
+
     public BannerView(Context context) {
         this(context,null);
     }
@@ -51,15 +66,43 @@ public class BannerView extends RelativeLayout{
         super(context, attrs, defStyleAttr);
         this.mContext = context ;
         View view = inflate(context, R.layout.ui_banner_layout, this);
+        initAttribute(context ,attrs);
         initView();
         mIndicatorFocuDrawable = new ColorDrawable(Color.RED);
         mIndicatorNormalDrawable = new ColorDrawable(Color.WHITE);
+    }
+
+    /**
+     * 初始化属性
+     * @param attrs
+     */
+    private void initAttribute(Context context ,AttributeSet attrs) {
+        TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.BannerView);
+        mDotGravity = array.getInt(R.styleable.BannerView_dotGravity,mDotGravity);
+        mIndicatorFocuDrawable = array.getDrawable(R.styleable.BannerView_dotIndicatorFocus);
+        if(mIndicatorFocuDrawable == null){
+            //如果在布局文件中没有配置颜色或者drawable
+            mIndicatorFocuDrawable = new ColorDrawable(Color.RED);
+        }
+        mIndicatorNormalDrawable = array.getDrawable(R.styleable.BannerView_dotIndicatorNormal);
+        if(mIndicatorNormalDrawable == null){
+            mIndicatorNormalDrawable = new ColorDrawable(Color.WHITE) ;
+        }
+        mDotSize = (int) array.getDimension(R.styleable.BannerView_dotSize,dip2px(mDotSize));
+        mDotDistance = (int) array.getDimension(R.styleable.BannerView_dotDistance,dip2px(mDotDistance));
+        mBottomColor = array.getColor(R.styleable.BannerView_bottomColor,mBottomColor);
+        mHeightProportion = array.getFloat(R.styleable.BannerView_heightProportion,mHeightProportion);
+        mWidthProportion = array.getFloat(R.styleable.BannerView_widthProportion,mWidthProportion);
+        array.recycle();
     }
 
     private void initView() {
         mBannerVP = (BannerViewPager)findViewById(R.id.banner_vp);
         mBannerDesc = (TextView) findViewById(R.id.banner_desc);
         mDotContainer = (LinearLayout)findViewById(R.id.dot_container);
+        mBannerBV = findViewById(R.id.banner_bottom_view);
+        mBannerBV.setBackgroundColor(mBottomColor);
+
     }
 
     /**
@@ -88,16 +131,30 @@ public class BannerView extends RelativeLayout{
 
         String desc = mAdapter.getItemDesc(mCurrIndicator);
         mBannerDesc.setText(desc);
+
+        post(new Runnable() {
+            @Override
+            public void run() {
+                //动态指定高度
+                if(mHeightProportion == 0 || mWidthProportion == 0){
+                    return;
+                }
+                int width = getMeasuredWidth();
+                int height = (int) (width * mHeightProportion / mWidthProportion);
+                getLayoutParams().height = height ;
+               // mBannerBV.getLayoutParams().height = height;
+            }
+        });
     }
 
     private void initDotIndicator() {
         int count = mAdapter.getCount();
-        mDotContainer.setGravity(Gravity.RIGHT);
+        mDotContainer.setGravity(getDotGravity());
         for (int i = 0 ; i < count ; i++){
             DotIndicatorView dot = new DotIndicatorView(mContext);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dip2px(8),dip2px(8));
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(mDotSize,mDotSize);
             dot.setLayoutParams(params);
-            params.leftMargin = dip2px(8) ;
+            params.leftMargin = mDotDistance ;
             if(i == 0){
                 dot.setDrawable(mIndicatorFocuDrawable);
             }else {
@@ -105,6 +162,18 @@ public class BannerView extends RelativeLayout{
             }
             mDotContainer.addView(dot);
         }
+    }
+
+        private int getDotGravity() {
+        switch (mDotGravity){
+            case 0 :
+                return Gravity.CENTER ;
+            case 1 :
+                return Gravity.LEFT ;
+            case -1 :
+                return Gravity.RIGHT ;
+        }
+        return Gravity.RIGHT;
     }
 
     /**

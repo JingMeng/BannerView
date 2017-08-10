@@ -27,8 +27,15 @@ public class MainActivity extends AppCompatActivity {
         mMyVP = (BannerView)findViewById(R.id.my_viewpager);
         mMyVP.setAdapter(new BannerAdapter() {
             @Override
-            public View getView(int positon) {
-                ImageView img = new ImageView( MainActivity.this);
+            public View getView(int positon , View convertview) {
+
+                ImageView img = null ;
+                if(convertview == null){
+                    img = new ImageView( MainActivity.this);
+                }else {
+                    img = (ImageView) convertview ;
+                }
+
                 img.setImageResource(items[positon]);
                 img.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 //img.setImageResource(R.mipmap.ic_launcher);

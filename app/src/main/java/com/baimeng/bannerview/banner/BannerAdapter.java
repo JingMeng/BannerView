@@ -8,7 +8,7 @@ import android.widget.BaseAdapter;
  */
 
 public abstract class BannerAdapter {
-    public abstract View getView(int positon) ;
+    public abstract View getView(int positon , View convertview) ;
 
     public abstract int getCount();
 

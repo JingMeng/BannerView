@@ -8,7 +8,15 @@
     <com.baimeng.bannerview.banner.BannerView
         android:id="@+id/my_viewpager"
         android:layout_width="match_parent"
-        android:layout_height="300dp">
+        android:layout_height="300dp"
+        app:widthProportion="8"
+        app:heightProportion="3"
+        app:dotSize="8dp"
+        app:dotDistance="10dp"
+        app:dotGravity="center"
+        app:bottomColor="@color/colorAccent"
+        app:dotIndicatorFocus="@color/colorPrimaryDark"
+        app:dotIndicatorNormal="#ffffff">
     </com.baimeng.bannerview.banner.BannerView>
 
 

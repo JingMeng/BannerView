@@ -1,5 +1,7 @@
 package com.baimeng.bannerview.banner;
 
+import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
@@ -10,6 +12,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Administrator on 2017/8/9.
@@ -22,6 +26,9 @@ public class BannerViewPager extends ViewPager {
     private final int SCROLL_MSG = 0x0011 ;
     private int mCutDownTime = 3500 ;
     private BannerScroller mScroller;
+    private Activity mActivity ;
+
+    private List<View> mConvertViews ;
 
     public BannerViewPager(Context context) {
         this(context,null);
@@ -39,6 +46,7 @@ public class BannerViewPager extends ViewPager {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        mConvertViews = new ArrayList<>();
     }
 
     public Handler mHandler = new Handler(){
@@ -54,6 +62,7 @@ public class BannerViewPager extends ViewPager {
     public void setAdapter (BannerAdapter adapter){
         this.mAdapter = adapter ;
         setAdapter(new BannerViewAdapter());
+        mActivity.getApplication().registerActivityLifecycleCallbacks(activityLife);
     }
 
     @Override
@@ -75,7 +84,7 @@ public class BannerViewPager extends ViewPager {
 
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
-            View view = mAdapter.getView(position % mAdapter.getCount());
+            View view = mAdapter.getView(position % mAdapter.getCount(),getConverView());
             container.addView(view);
             return view;
         }
@@ -83,8 +92,19 @@ public class BannerViewPager extends ViewPager {
         @Override
         public void destroyItem(ViewGroup container, int position, Object object) {
             container.removeView((View)object);
-            object = null ;
+            //复用convertview
+            mConvertViews.add((View) object) ;
         }
+    }
+
+    //返回复用的界面
+    private View getConverView() {
+        for (int i = 0 ; i<mConvertViews.size() ; i++){
+            if(mConvertViews.get(i).getParent() == null){
+                return mConvertViews.get(i);
+            }
+        }
+        return null ;
     }
 
     /**
@@ -103,6 +123,7 @@ public class BannerViewPager extends ViewPager {
         super.onDetachedFromWindow();
         mHandler.removeMessages(SCROLL_MSG);
         mHandler = null ;
+        mActivity.getApplication().unregisterActivityLifecycleCallbacks(activityLife);
     }
 
     /**
@@ -112,5 +133,24 @@ public class BannerViewPager extends ViewPager {
     public void setScrollerDuration(int duration){
         mScroller.setScrollerDuration(duration);
     }
+
+
+    Application.ActivityLifecycleCallbacks  activityLife = new DefaultActivityLifeCycleCallBack(){
+        @Override
+        public void onActivityResumed(Activity activity) {
+            if(activity == mActivity){
+                mHandler.sendEmptyMessageDelayed(SCROLL_MSG,mCutDownTime);
+            }
+        }
+
+        @Override
+        public void onActivityPaused(Activity activity) {
+            if(activity == mActivity){
+                mHandler.removeMessages(SCROLL_MSG);
+            }
+        }
+    };
+
+
 
 }
