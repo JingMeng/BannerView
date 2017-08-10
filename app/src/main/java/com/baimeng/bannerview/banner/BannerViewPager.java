@@ -75,7 +75,7 @@ public class BannerViewPager extends ViewPager {
 
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
-            View view = mAdapter.getView(position);
+            View view = mAdapter.getView(position % mAdapter.getCount());
             container.addView(view);
             return view;
         }
